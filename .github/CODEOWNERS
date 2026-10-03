@@ -1,0 +1,7 @@
+# Every change needs a review from the people who own that area (replace the placeholder handles).
+*                       @shopsphere/maintainers
+/common-security/       @shopsphere/security
+/auth-service/          @shopsphere/security
+/api-gateway/           @shopsphere/platform @shopsphere/security
+/docker-compose.yml     @shopsphere/platform
+/docs/                  @shopsphere/maintainers

@@ -1,0 +1,106 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+  cloud:
+    loadbalancer:
+      cache:
+        ttl: 5s                     # dev: pick up newly registered instances quickly (default 35s)
+    gateway:
+      discovery:
+        locator:
+          enabled: false            # only the routes below are exposed, never "every registered service"
+      httpclient:
+        connect-timeout: 2000
+        response-timeout: 10s
+      default-filters:
+        # the gateway and the service both set X-Correlation-Id; keep one value
+        - DedupeResponseHeader=X-Correlation-Id, RETAIN_FIRST
+      routes:
+        # --- identity: anonymous, so the strictest limit (per IP) to slow down credential stuffing -------------
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth/**,/oauth/**,/.well-known/**,/userinfo
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args: { name: authCb }
+
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/*/products/**,/api/*/products
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@principalOrIpKeyResolver}"
+            - name: CircuitBreaker
+              args: { name: productCb }
+
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/*/orders/**,/api/*/orders
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@principalOrIpKeyResolver}"
+            - name: CircuitBreaker
+              args: { name: orderCb }
+
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/*/notifications/**,/api/*/notifications
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@principalOrIpKeyResolver}"
+            - name: CircuitBreaker
+              args: { name: notificationCb }
+
+shopsphere:
+  gateway:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+    jwk-set-uri: ${AUTH_JWKS_URI:http://localhost:8081/.well-known/jwks.json}
+    issuer: ${AUTH_ISSUER:http://localhost:8081}
+
+eureka:
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    level: "%5p [%X{correlationId:-}]"

@@ -1,0 +1,45 @@
+server:
+  port: 8081
+  shutdown: graceful
+
+spring:
+  application:
+    name: auth-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/shopsphere_auth}
+      auto-index-creation: true
+  threads:
+    virtual:
+      enabled: true     # Java 21 virtual threads: cheap blocking I/O under high concurrency
+
+shopsphere:
+  auth:
+    issuer: ${AUTH_ISSUER:http://localhost:8081}
+    access-token-ttl: 15m
+    refresh-token-ttl: 7d
+    seed:
+      enabled: ${SEED_DEMO_USERS:true}            # set to false in production
+      admin-password: ${SEED_ADMIN_PASSWORD:Admin#Pass123}
+      user-password: ${SEED_USER_PASSWORD:Alice#Pass123}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    level: "%5p [%X{correlationId:-}]"

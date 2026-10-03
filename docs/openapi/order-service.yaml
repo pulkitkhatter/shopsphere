@@ -1,0 +1,217 @@
+openapi: 3.0.1
+info:
+  title: ShopSphere Order API
+  version: "1"
+servers:
+- url: http://localhost:8083
+  description: Generated server url
+paths:
+  /api/v1/orders:
+    get:
+      tags:
+      - Orders
+      summary: My orders (newest first)
+      operationId: mine
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          maximum: 50
+          minimum: 1
+          type: integer
+          format: int32
+          default: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+      security:
+      - bearer-jwt: []
+    post:
+      tags:
+      - Orders
+      summary: Place an order for the authenticated user
+      description: "Send an Idempotency-Key header to make retries safe: a repeated\
+        \ key returns the original order (200) instead of creating a new one (201)."
+      operationId: place
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        description: "Client generated unique key (UUID), 8-64 chars"
+        required: false
+        schema:
+          maxLength: 64
+          minLength: 8
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+      security:
+      - bearer-jwt: []
+  /api/v1/orders/{id}/cancel:
+    post:
+      tags:
+      - Orders
+      summary: Cancel an order; stock is restored asynchronously via Kafka
+      operationId: cancel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+      security:
+      - bearer-jwt: []
+  /api/v1/orders/{id}:
+    get:
+      tags:
+      - Orders
+      summary: One of my orders (admins can read any)
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+      security:
+      - bearer-jwt: []
+  /api/v1/orders/all:
+    get:
+      tags:
+      - Orders
+      summary: All orders (ADMIN)
+      operationId: all
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+      security:
+      - bearer-jwt: []
+components:
+  schemas:
+    Line:
+      required:
+      - productId
+      type: object
+      properties:
+        productId:
+          pattern: "[A-Za-z0-9]{1,64}"
+          type: string
+        quantity:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+    OrderRequest:
+      required:
+      - items
+      type: object
+      properties:
+        items:
+          maxItems: 50
+          minItems: 0
+          type: array
+          items:
+            $ref: "#/components/schemas/Line"
+    Item:
+      type: object
+      properties:
+        productId:
+          type: string
+        sku:
+          type: string
+        name:
+          type: string
+        unitPrice:
+          type: number
+        quantity:
+          type: integer
+          format: int32
+        lineTotal:
+          type: number
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        total:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+        createdAt:
+          type: string
+          format: date-time
+        cancelledAt:
+          type: string
+          format: date-time
+  securitySchemes:
+    bearer-jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

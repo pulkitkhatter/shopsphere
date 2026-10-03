@@ -1,0 +1,13 @@
+{
+  "name": "shopsphere-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ShopSphere storefront: dependency-free ES-module single page app",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/",
+    "test:coverage": "node --test --experimental-test-coverage test/"
+  },
+  "engines": { "node": ">=20" }
+}

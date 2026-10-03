@@ -1,0 +1,124 @@
+openapi: 3.0.1
+info:
+  title: ShopSphere Auth API
+  description: Identity provider
+  version: "1"
+servers:
+- url: http://localhost:8081
+  description: Generated server url
+paths:
+  /oauth/token:
+    post:
+      tags:
+      - OAuth2 token endpoint
+      summary: OAuth2 token endpoint
+      description: "grant_type=password (username, password) or grant_type=refresh_token\
+        \ (refresh_token). Refresh tokens rotate: each one can be used once."
+      operationId: token
+      parameters:
+      - name: grant_type
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: username
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: password
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: refresh_token
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+  /auth/register:
+    post:
+      tags:
+      - Registration
+      summary: Register a new customer account (role USER)
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+  /userinfo:
+    get:
+      tags:
+      - OIDC UserInfo
+      summary: Claims about the authenticated user
+      operationId: userInfo
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+      security:
+      - bearer-jwt: []
+components:
+  schemas:
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+          format: int64
+        refresh_token:
+          type: string
+        scope:
+          type: string
+    RegisterRequest:
+      required:
+      - email
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          maxLength: 32
+          minLength: 3
+          pattern: "[A-Za-z0-9_.-]+"
+          type: string
+        email:
+          maxLength: 120
+          minLength: 0
+          type: string
+        password:
+          maxLength: 72
+          minLength: 10
+          type: string
+  securitySchemes:
+    bearer-jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

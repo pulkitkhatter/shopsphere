@@ -1,0 +1,87 @@
+server:
+  port: 8082
+  shutdown: graceful
+
+spring:
+  application:
+    name: product-service
+  threads:
+    virtual:
+      enabled: true
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/shopsphere_products}
+      auto-index-creation: true        # dev convenience; in production create indexes via migration
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      timeout: 500ms                   # fail fast: a slow cache is worse than no cache
+  cache:
+    type: redis
+    cache-names: products              # created at start-up so that its metrics are registered
+    redis:
+      time-to-live: 10m
+      enable-statistics: true          # exposes cache hit/miss metrics
+      key-prefix: "shopsphere:"
+      use-key-prefix: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable.idempotence: true
+        spring.json.add.type.headers: false      # contract is plain JSON, no Java class names on the wire
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: com.shopsphere.product.event.OrderEvent
+        spring.json.use.type.headers: false
+        spring.json.trusted.packages: com.shopsphere.product.event
+    listener:
+      ack-mode: record
+
+shopsphere:
+  security:
+    jwk-set-uri: ${AUTH_JWKS_URI:http://localhost:8081/.well-known/jwks.json}
+    issuer: ${AUTH_ISSUER:http://localhost:8081}
+  topics:
+    order-events: order-events
+    product-events: product-events
+  seed:
+    enabled: ${SEED_DEMO_DATA:true}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    groups-order: desc
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,caches
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+logging:
+  pattern:
+    level: "%5p [%X{correlationId:-}]"

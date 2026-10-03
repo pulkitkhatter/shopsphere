@@ -1,0 +1,10 @@
+target/
+build/
+.gradle/
+node_modules/
+logs/
+.pids/
+.idea/
+*.iml
+.vscode/
+.DS_Store

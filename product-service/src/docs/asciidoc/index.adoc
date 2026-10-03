@@ -1,0 +1,47 @@
+= ShopSphere Product API
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 3
+:sectlinks:
+
+[[overview]]
+== Overview
+
+The catalogue is public for reading; creating, changing and deleting products needs a bearer token of a user with the `ADMIN` role
+(obtain one from `POST /oauth/token` on the auth service, through the gateway).
+
+[[versioning]]
+=== Versioning
+
+The version is part of the URI (`/api/v2/products`).
+A new major version is introduced only for breaking changes; `v1` stays available but every `v1` response carries
+`Deprecation`, `Sunset` and `Link: <...>; rel="successor-version"` headers (RFC 8594).
+
+|===
+| Version | Status | Notable difference
+
+| v1 | deprecated | flat `price`, unpaginated list capped at 100 items
+| v2 | current | `price` is an object, tags, availability, filtering, sorting, pagination
+|===
+
+[[errors]]
+=== Errors
+
+All errors are `application/problem+json` (RFC 7807): `type`, `title`, `status`, `detail` and, for validation errors, an `errors` map of field to message.
+
+[[search]]
+== Search products
+
+operation::products-search[snippets='query-parameters,curl-request,http-response,response-fields']
+
+[[get]]
+== Get one product
+
+operation::products-get[snippets='path-parameters,curl-request,http-response,response-fields']
+
+[[create]]
+== Create a product
+
+operation::products-create[snippets='request-headers,curl-request,request-fields,http-response']

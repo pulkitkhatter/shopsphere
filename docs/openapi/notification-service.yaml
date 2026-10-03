@@ -1,0 +1,81 @@
+openapi: 3.0.1
+info:
+  title: ShopSphere Notification API
+  version: "1"
+servers:
+- url: http://localhost:8084
+  description: Generated server url
+paths:
+  /api/v1/notifications:
+    get:
+      tags:
+      - Notifications
+      summary: "My notifications, newest first"
+      operationId: mine
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageView"
+      security:
+      - bearer-jwt: []
+components:
+  schemas:
+    NotificationView:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        type:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    PageView:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationView"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+  securitySchemes:
+    bearer-jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

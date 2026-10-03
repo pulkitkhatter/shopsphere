@@ -1,0 +1,7 @@
+spring:
+  data:
+    mongodb:
+      auto-index-creation: false
+eureka:
+  client:
+    enabled: false

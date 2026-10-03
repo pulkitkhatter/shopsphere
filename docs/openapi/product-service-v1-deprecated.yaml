@@ -1,0 +1,175 @@
+openapi: 3.0.1
+info:
+  title: ShopSphere Product API
+  description: Catalogue API. v1 is deprecated (sunset announced via the Sunset header);
+    use v2.
+  version: "2"
+servers:
+- url: http://localhost:8082
+  description: Generated server url
+paths:
+  /api/v1/products/{id}:
+    get:
+      tags:
+      - Products v1 (deprecated)
+      summary: Get one product
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProductV1"
+      deprecated: true
+    put:
+      tags:
+      - Products v1 (deprecated)
+      summary: Replace product (ADMIN)
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductRequestV1"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProductV1"
+      deprecated: true
+      security:
+      - bearer-jwt: []
+    delete:
+      tags:
+      - Products v1 (deprecated)
+      summary: Delete product (ADMIN)
+      operationId: delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+      deprecated: true
+      security:
+      - bearer-jwt: []
+  /api/v1/products:
+    get:
+      tags:
+      - Products v1 (deprecated)
+      summary: List products (max 100)
+      operationId: list
+      parameters:
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductV1"
+      deprecated: true
+    post:
+      tags:
+      - Products v1 (deprecated)
+      summary: Create product (ADMIN)
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductRequestV1"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProductV1"
+      deprecated: true
+      security:
+      - bearer-jwt: []
+components:
+  schemas:
+    ProductRequestV1:
+      required:
+      - category
+      - name
+      - price
+      - sku
+      type: object
+      properties:
+        sku:
+          maxLength: 40
+          minLength: 0
+          pattern: "[A-Za-z0-9-]+"
+          type: string
+        name:
+          maxLength: 120
+          minLength: 0
+          type: string
+        description:
+          maxLength: 2000
+          minLength: 0
+          type: string
+        category:
+          maxLength: 60
+          minLength: 0
+          type: string
+        price:
+          minimum: 0.01
+          exclusiveMinimum: false
+          type: number
+        stock:
+          minimum: 0
+          type: integer
+          format: int32
+    ProductV1:
+      type: object
+      properties:
+        id:
+          type: string
+        sku:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+        stock:
+          type: integer
+          format: int32
+  securitySchemes:
+    bearer-jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
