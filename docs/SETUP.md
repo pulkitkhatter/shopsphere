@@ -88,5 +88,5 @@ Data (products, users, orders) is kept in Docker volumes between runs. To start 
 | Windows: `bad interpreter` / `^M` errors | Files were checked out with CRLF line endings: `git config core.autocrlf false`, re-clone inside WSL2. |
 | Logs | `logs/<service>.log` in the project folder. |
 
-## 9. Running it on a server instead of a laptop
-The same steps work on a Linux VM (4 vCPU / 16 GB recommended). To reach the app from other machines, expose ports 3000 (web) and 8080 (gateway) only, and set `ALLOWED_ORIGINS=http://<server-address>:3000` and `window.__API_BASE__` / `API_ORIGIN` accordingly. This is a **development setup** (no TLS, demo users, unauthenticated Eureka); see `docs/SECURITY.md` for the production checklist before exposing it publicly.
+## 9. Running it on a server instead of a laptop (not tested)
+The same steps should work on a Linux VM (4 vCPU / 16 GB recommended). Reaching it from other machines needs a few manual changes because everything is configured for `localhost`: set `ALLOWED_ORIGINS` (gateway) and `API_ORIGIN` (web server) to the real addresses, change `API_BASE` in `frontend/public/js/config.js`, and expose only ports 3000 and 8080. This is a **development setup** (no TLS, demo users, unauthenticated Eureka); see `docs/SECURITY.md` for the production checklist before exposing it publicly.
